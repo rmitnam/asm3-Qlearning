@@ -16,7 +16,7 @@ BULLET_SPEED = 10
 ENEMY_SPEED = 2
 SPAWNER_HP = 50
 ENEMY_HP = 10
-PLAYER_HP = 100
+PLAYER_HP = 30
 
 class SpaceArenaEnv(gym.Env):
     """
