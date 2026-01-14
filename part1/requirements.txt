@@ -1,0 +1,9 @@
+# Q-Learning Gridworld Project Dependencies
+
+# Core dependencies
+pygame>=2.5.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+
+# Optional but recommended
+scipy>=1.10.0
