@@ -91,18 +91,3 @@ Edit `config.py` to adjust:
 - Maximum episodes and steps
 - Rendering options
 
-## Results
-
-| Level | Q-Learning | SARSA |
-|-------|------------|-------|
-| 0 - Basic | 100% | 100% |
-| 1 - Fire | 100% | 0% |
-| 2 - Key-Chest | 100% | 100% |
-| 3 - Complex | 100% | 100% |
-| 4 - Monsters | 10% | 0% |
-
-Q-Learning achieves optimal 18-step path on Level 0.
-
-## License
-
-Educational project for reinforcement learning coursework.

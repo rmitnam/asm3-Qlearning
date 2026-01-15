@@ -12,7 +12,7 @@ ALPHA = 0.1                 # Learning rate
 GAMMA = 0.95                # Discount factor
 EPSILON_START = 1.0         # Initial exploration rate
 EPSILON_END = 0.01          # Minimum exploration rate
-EPSILON_DECAY = 0.995       # Epsilon decay multiplier per episode
+EPSILON_DECAY_EPISODES = 4000  # Episodes over which epsilon decays linearly
 
 # Training settings
 MAX_EPISODES = 5000         # Maximum training episodes

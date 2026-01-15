@@ -20,31 +20,17 @@ class SARSAAgent:
     rather than max Q-value.
     """
     
-    def __init__(self, alpha=None, gamma=None, epsilon_start=None, 
-                 epsilon_end=None, epsilon_decay=None):
-        """
-        Initialize SARSA agent.
-        
-        Args:
-            alpha: Learning rate (default from config)
-            gamma: Discount factor (default from config)
-            epsilon_start: Initial exploration rate (default from config)
-            epsilon_end: Minimum exploration rate (default from config)
-            epsilon_decay: Epsilon decay rate (default from config)
-        """
+    def __init__(self, alpha=None, gamma=None, epsilon_start=None,
+                 epsilon_end=None, epsilon_decay_episodes=None):
+        """Initialize SARSA agent with linear epsilon decay."""
         self.alpha = alpha if alpha is not None else config.ALPHA
         self.gamma = gamma if gamma is not None else config.GAMMA
         self.epsilon_start = epsilon_start if epsilon_start is not None else config.EPSILON_START
         self.epsilon_end = epsilon_end if epsilon_end is not None else config.EPSILON_END
-        self.epsilon_decay = epsilon_decay if epsilon_decay is not None else config.EPSILON_DECAY
-        
-        # Q-table: dictionary mapping (state, action) to Q-value
+        self.epsilon_decay_episodes = epsilon_decay_episodes if epsilon_decay_episodes is not None else config.EPSILON_DECAY_EPISODES
+
         self.q_table = defaultdict(float)
-        
-        # Current epsilon
         self.epsilon = self.epsilon_start
-        
-        # Training statistics
         self.episode_count = 0
         self.total_steps = 0
     
@@ -113,9 +99,13 @@ class SARSAAgent:
         self.total_steps += 1
     
     def decay_epsilon(self):
-        """Decay epsilon for next episode."""
-        self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
+        """Decay epsilon linearly from epsilon_start to epsilon_end over epsilon_decay_episodes."""
         self.episode_count += 1
+        if self.episode_count >= self.epsilon_decay_episodes:
+            self.epsilon = self.epsilon_end
+        else:
+            decay_fraction = self.episode_count / self.epsilon_decay_episodes
+            self.epsilon = self.epsilon_start - (self.epsilon_start - self.epsilon_end) * decay_fraction
     
     def reset_epsilon(self):
         """Reset epsilon to initial value."""
@@ -161,28 +151,7 @@ class SARSAAgent:
 
 
 if __name__ == "__main__":
-    print("Testing SARSA Agent\n")
-    
+    # Quick test of linear decay
     agent = SARSAAgent()
-    print("Created SARSA agent")
-    print(f"  Alpha: {agent.alpha}")
-    print(f"  Gamma: {agent.gamma}")
-    print(f"  Epsilon: {agent.epsilon_start} → {agent.epsilon_end}")
-    print()
-    
-    # Test update (different from Q-Learning)
-    test_state = (5, 5)
-    next_state = (6, 5)
-    
-    print("Testing SARSA update:")
-    print("  Initial Q(s, RIGHT) = 0")
-    
-    # In SARSA, we need to know the next action
-    next_action = config.DOWN
-    agent.update(test_state, config.RIGHT, 1.0, next_state, next_action, False)
-    
-    print(f"  After SARSA update with next_action={config.ACTION_NAMES[next_action]}:")
-    print(f"  Q({test_state}, RIGHT) = {agent.get_q_value(test_state, config.RIGHT):.4f}")
-    print()
-    
-    print("✓ SARSA agent test complete!")
+    print(f"SARSA Linear epsilon decay test:")
+    print(f"  Start: {agent.epsilon_start}, End: {agent.epsilon_end}, Episodes: {agent.epsilon_decay_episodes}")

@@ -60,16 +60,21 @@ def train_agent(agent, env, max_episodes=None, render=False, verbose=True):
             # Take step
             next_state, reward, done, info = env.step(action)
 
+            # Add intrinsic reward for updates only (env reward unchanged)
+            update_reward = reward
+            if config.USE_INTRINSIC_REWARD:
+                update_reward += env.get_intrinsic_reward(next_state)
+
             # Select next action (needed for SARSA)
             next_action = agent.select_action(next_state, explore=True) if not done else None
 
             # Update agent (works for both Q-Learning and SARSA)
             if hasattr(agent, 'update') and 'next_action' in agent.update.__code__.co_varnames:
                 # SARSA: needs next_action
-                agent.update(state, action, reward, next_state, next_action, done)
+                agent.update(state, action, update_reward, next_state, next_action, done)
             else:
                 # Q-Learning: doesn't need next_action
-                agent.update(state, action, reward, next_state, done)
+                agent.update(state, action, update_reward, next_state, done)
 
             # Render if enabled
             if render and (config.RENDER_DURING_TRAINING or

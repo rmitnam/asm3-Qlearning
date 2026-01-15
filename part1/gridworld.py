@@ -211,11 +211,12 @@ class GridWorld:
             reward += config.REWARD_CHEST
             self.chest_opened = True
         
-        # Add intrinsic reward if enabled
-        if config.USE_INTRINSIC_REWARD:
-            intrinsic = self._compute_intrinsic_reward()
-            reward += intrinsic
-        
+        # Update visit count for intrinsic reward tracking (but don't add to reward here)
+        state = self.get_state()
+        if state not in self.state_visit_counts:
+            self.state_visit_counts[state] = 0
+        self.state_visit_counts[state] += 1
+
         # Move monsters (probabilistic)
         if len(self.monsters) > 0:
             self._move_monsters()
@@ -238,27 +239,14 @@ class GridWorld:
         
         return self.get_state(), reward, self.done, {}
     
-    def _compute_intrinsic_reward(self):
+    def get_intrinsic_reward(self, state):
         """
-        Compute intrinsic reward based on state visit count.
-        Intrinsic reward = beta / sqrt(n(s))
-        where n(s) is the number of times state s has been visited this episode.
-        
-        Returns:
-            Intrinsic reward value
+        Compute intrinsic reward for a state based on visit count.
+        Formula: beta / sqrt(n(s) + 1) where n(s) is visits to state s this episode.
+        Called by agent during Q-value updates, not added to env reward.
         """
-        state = self.get_state()
-        
-        # Increment visit count
-        if state not in self.state_visit_counts:
-            self.state_visit_counts[state] = 0
-        self.state_visit_counts[state] += 1
-        
-        # Compute intrinsic reward: 1 / sqrt(n(s))
-        n_s = self.state_visit_counts[state]
-        intrinsic = config.INTRINSIC_REWARD_BETA / np.sqrt(n_s)
-        
-        return intrinsic
+        n_s = self.state_visit_counts.get(state, 0)
+        return config.INTRINSIC_REWARD_BETA / np.sqrt(n_s + 1)
     
     def _move_monsters(self):
         """
