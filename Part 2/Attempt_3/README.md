@@ -5,6 +5,7 @@ A real-time Pygame arena game environment with deep reinforcement learning agent
 ## Game Overview
 
 The arena is a simplified action game where:
+
 - **Player Ship**: A controllable ship with health, movement, and shooting capabilities
 - **Enemy Spawners**: Hexagonal structures that periodically spawn enemies
 - **Enemies**: Red diamond-shaped entities that chase the player
@@ -12,11 +13,12 @@ The arena is a simplified action game where:
 - **Phase System**: Destroying all spawners progresses to harder phases
 
 ### Objective
+
 Survive as long as possible while destroying enemy spawners to progress through phases. The game features continuous movement, collision detection, and a phase-based difficulty system.
 
 ## Project Structure
 
-```
+```text
 Attempt_3/
 ├── config.py                    # All configuration constants and hyperparameters
 ├── entities.py                  # Player, Enemy, Spawner, Projectile classes
@@ -34,8 +36,9 @@ Attempt_3/
 ## Control Schemes
 
 ### Control Style 1: Rotation Movement
+
 | Action | Effect |
-|--------|--------|
+| ------ | ------ |
 | 0 | No action |
 | 1 | Thrust forward |
 | 2 | Rotate left |
@@ -48,8 +51,9 @@ Attempt_3/
 The ship has momentum and friction, requiring the player to plan ahead. Combined actions allow shooting while moving, making the control scheme more viable for combat.
 
 ### Control Style 2: Directional Movement
+
 | Action | Effect |
-|--------|--------|
+| ------ | ------ |
 | 0 | No action |
 | 1 | Move up |
 | 2 | Move down |
@@ -62,8 +66,9 @@ Direct 4-way movement with auto-aiming when shooting. Easier to learn but less p
 ## Observation Space
 
 ### Rotation Controls (28 features)
+
 | Index | Feature | Description |
-|-------|---------|-------------|
+| ----- | ------- | ----------- |
 | 0-1 | Player position | x, y normalized to [-1, 1] |
 | 2-3 | Player velocity | vx, vy normalized |
 | 4-5 | Player orientation | cos(angle), sin(angle) |
@@ -79,12 +84,13 @@ Direct 4-way movement with auto-aiming when shooting. Easier to learn but less p
 | 27 | Time remaining | Normalized remaining steps |
 
 ### Directional Controls (26 features)
+
 Same structure but without orientation features (indices 4-5), as direction is determined by movement.
 
 ## Reward Structure
 
 | Event | Reward | Justification |
-|-------|--------|---------------|
+| ----- | ------ | ------------- |
 | Kill enemy | +10.0 | Encourages combat engagement |
 | Kill spawner | +50.0 | Primary objective - eliminates threat source |
 | Progress to next phase | +100.0 | Major milestone reward |
@@ -97,6 +103,7 @@ Same structure but without orientation features (indices 4-5), as direction is d
 ### Shaping Rewards (Justified)
 
 **Rotation Controls** (enhanced shaping for harder control scheme):
+
 - **Facing spawner bonus**: Up to +0.03/step when facing toward nearest spawner
   - *Justification*: Rotation requires learning to aim; this guides aiming behavior
 - **Approach spawner bonus**: Up to +0.02/step when close to spawners
@@ -107,17 +114,20 @@ Same structure but without orientation features (indices 4-5), as direction is d
   - *Justification*: Discourages getting surrounded, encourages clearing enemies
 
 **Directional Controls** (simpler shaping):
+
 - **Approach spawner bonus**: Up to +0.02/step when close to spawners
   - *Justification*: Guides early exploration toward main objectives
 
 ## Installation
 
 ### Requirements
+
 ```bash
 pip install pygame numpy gymnasium stable-baselines3[extra] tensorboard
 ```
 
 ### Verify Installation
+
 ```python
 python arena_env_rotation.py  # Test rotation environment
 python arena_env_directional.py  # Test directional environment
@@ -126,6 +136,7 @@ python arena_env_directional.py  # Test directional environment
 ## Training
 
 ### Train Rotation Agent (PPO)
+
 ```bash
 # Default training (500k timesteps)
 python train_rotation.py
@@ -135,6 +146,7 @@ python train_rotation.py --timesteps 300000 --n-envs 8 --name my_experiment
 ```
 
 ### Train Directional Agent (PPO)
+
 ```bash
 # Default training
 python train_directional.py
@@ -144,8 +156,9 @@ python train_directional.py -t 400000 -lr 0.0001
 ```
 
 ### Training Arguments
+
 | Argument | Short | Default | Description |
-|----------|-------|---------|-------------|
+| -------- | ----- | ------- | ----------- |
 | --algorithm | -a | ppo | RL algorithm (ppo/dqn) |
 | --timesteps | -t | 500000 | Total training timesteps |
 | --n-envs | -n | 4 | Parallel environments (PPO) |
@@ -154,14 +167,17 @@ python train_directional.py -t 400000 -lr 0.0001
 | --name | -N | auto | Experiment name |
 
 ### Monitor Training
+
 ```bash
 tensorboard --logdir=logs
 ```
-Open http://localhost:6006 in your browser.
+
+Open <http://localhost:6006> in your browser.
 
 ## Evaluation
 
 ### Evaluate Trained Agent
+
 ```bash
 # Rotation agent
 python evaluate_rotation.py --model models/rotation_ppo
@@ -171,6 +187,7 @@ python evaluate_directional.py --model models/directional_ppo
 ```
 
 ### Human Play Mode
+
 ```bash
 # Play rotation controls manually
 python evaluate_rotation.py --human
@@ -180,8 +197,9 @@ python evaluate_directional.py --human
 ```
 
 ### Evaluation Arguments
+
 | Argument | Short | Default | Description |
-|----------|-------|---------|-------------|
+| -------- | ----- | ------- | ----------- |
 | --model | -m | auto | Model path or directory |
 | --algorithm | -a | ppo | Algorithm used |
 | --episodes | -e | 5 | Episodes to run |
@@ -193,14 +211,16 @@ python evaluate_directional.py --human
 ## Neural Network Architecture
 
 Both agents use the same MLP architecture:
+
 - **Policy Network**: 128 → 128 neurons (2 hidden layers)
 - **Value Network**: 128 → 128 neurons (2 hidden layers)
 - **Activation**: ReLU
 - **Output**: Softmax over discrete actions
 
 ### PPO Hyperparameters
+
 | Parameter | Value | Description |
-|-----------|-------|-------------|
+| --------- | ----- | ----------- |
 | Learning Rate | 3e-4 | Optimizer learning rate |
 | N Steps | 2048 | Steps per update |
 | Batch Size | 64 | Mini-batch size |
@@ -213,6 +233,7 @@ Both agents use the same MLP architecture:
 ## Visualization
 
 ### Game Elements
+
 - **Player Ship**: Cyan triangle pointing in movement direction
 - **Enemies**: Red diamonds that move toward player
 - **Spawners**: Pulsing purple hexagons with spawn timer indicator
@@ -220,6 +241,7 @@ Both agents use the same MLP architecture:
 - **Effects**: Particle explosions on kills and damage
 
 ### HUD Information
+
 - Phase counter
 - Health bar
 - Enemy count
@@ -231,6 +253,7 @@ Both agents use the same MLP architecture:
 ## Episode Termination
 
 An episode ends when:
+
 1. **Player Death**: Health reaches 0
 2. **Max Steps**: 3000 steps (configurable)
 3. **Victory**: All spawners destroyed in final phase (Phase 5)
@@ -240,6 +263,7 @@ An episode ends when:
 All game parameters can be adjusted in `config.py`:
 
 ### Window Settings
+
 ```python
 WINDOW_WIDTH = 960
 WINDOW_HEIGHT = 680
@@ -247,6 +271,7 @@ FPS = 60
 ```
 
 ### Player Settings
+
 ```python
 PLAYER_MAX_HEALTH = 100
 PLAYER_MAX_SPEED = 5.0
@@ -254,6 +279,7 @@ PLAYER_SHOOT_COOLDOWN = 10
 ```
 
 ### Difficulty Settings
+
 ```python
 INITIAL_SPAWNERS = 2
 SPAWNERS_PER_PHASE = 1
@@ -263,12 +289,14 @@ MAX_PHASE = 5
 ## Expected Performance
 
 After ~500k timesteps of training:
+
 - **Phase Reached**: Consistently reach Phase 2-3
 - **Enemies Killed**: 20-50 per episode
 - **Spawners Killed**: 2-5 per episode
 - **Survival Time**: 1000-2000 steps
 
 Performance varies based on:
+
 - Random spawner placement
 - Enemy behavior randomness
 - Action exploration during training
@@ -282,6 +310,7 @@ Performance varies based on:
 3. **Memory issues**: Reduce `n_envs` or `buffer_size`
 
 ### Tips
+
 - Start with shorter training runs to test configuration
 - Use TensorBoard to monitor learning progress
 - Adjust rewards if agent gets stuck in local optima

@@ -51,7 +51,7 @@ ENEMY_SPAWN_DELAY = 60  # frames between enemy spawns per spawner
 # =============================================================================
 SPAWNER_SIZE = 30
 SPAWNER_HEALTH = 100
-SPAWNER_SPAWN_RATE = 90  # frames between spawns
+SPAWNER_SPAWN_RATE = 180  # frames between spawns
 
 # =============================================================================
 # PROJECTILE SETTINGS
@@ -59,7 +59,7 @@ SPAWNER_SPAWN_RATE = 90  # frames between spawns
 PROJECTILE_SIZE = 5
 PROJECTILE_SPEED = 10.0
 PROJECTILE_DAMAGE = 20
-PROJECTILE_LIFETIME = 60  # frames before projectile disappears
+PROJECTILE_LIFETIME = 90  # frames before projectile disappears
 
 # =============================================================================
 # PHASE SETTINGS
@@ -67,7 +67,7 @@ PROJECTILE_LIFETIME = 60  # frames before projectile disappears
 INITIAL_SPAWNERS = 2
 SPAWNERS_PER_PHASE = 1  # additional spawners per phase
 MAX_PHASE = 5
-PHASE_SPAWN_RATE_REDUCTION = 10  # spawn faster each phase
+PHASE_SPAWN_RATE_REDUCTION = 5  # spawn faster each phase
 
 # =============================================================================
 # EPISODE SETTINGS
