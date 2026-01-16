@@ -2,12 +2,15 @@
 Arena Environment with Rotation-Based Controls
 Gym-style environment for RL training with thrust and rotation movement.
 
-Actions:
+Actions (expanded for better control):
 0 - No action
 1 - Thrust forward
 2 - Rotate left
 3 - Rotate right
 4 - Shoot
+5 - Thrust + Shoot (combined)
+6 - Rotate left + Shoot (combined)
+7 - Rotate right + Shoot (combined)
 """
 
 import gymnasium as gym
@@ -26,6 +29,7 @@ class ArenaEnvRotation(gym.Env):
     Arena environment with rotation-based controls.
     
     The player controls a ship that can thrust forward, rotate left/right, and shoot.
+    Combined actions allow shooting while moving/rotating for better gameplay.
     The goal is to destroy enemy spawners while surviving waves of enemies.
     """
     
@@ -39,8 +43,8 @@ class ArenaEnvRotation(gym.Env):
         self.clock = None
         self.font = None
         
-        # Action space: 5 discrete actions
-        self.action_space = spaces.Discrete(5)
+        # Action space: 8 discrete actions (including combined actions)
+        self.action_space = spaces.Discrete(8)
         
         # Observation space: continuous vector
         # Structure:
@@ -355,29 +359,88 @@ class ArenaEnvRotation(gym.Env):
     
     def _get_shaping_reward(self) -> float:
         """
-        Calculate shaping reward to guide learning.
+        Calculate shaping reward to guide learning for rotation controls.
         
-        Justification:
-        - Encourages approaching spawners (primary objective) with small bonus
-        - Penalty is small enough not to overshadow main rewards
-        - Helps agent learn that spawners are important targets
+        Justification for rotation-specific shaping:
+        - Rotation controls are harder because agent must coordinate facing direction with movement
+        - Additional shaping rewards help agent learn:
+          1. Face toward targets (aiming reward)
+          2. Approach spawners (distance reward)
+          3. Avoid getting surrounded (enemy avoidance)
+        - All shaping rewards are small enough not to overshadow main task rewards
         """
         reward = 0.0
+        max_dist = math.sqrt(WINDOW_WIDTH**2 + WINDOW_HEIGHT**2)
         
-        # Find nearest spawner
+        # Get player facing direction
+        player_rad = math.radians(self.player.angle)
+        facing_x = math.cos(player_rad)
+        facing_y = math.sin(player_rad)
+        
+        # 1. Reward for facing toward nearest spawner (helps learn aiming)
         alive_spawners = [s for s in self.spawners if s.alive]
         if alive_spawners:
+            # Find nearest spawner
             min_dist = float('inf')
+            nearest_spawner = None
             for spawner in alive_spawners:
                 dx = spawner.x - self.player.x
                 dy = spawner.y - self.player.y
                 dist = math.sqrt(dx**2 + dy**2)
-                min_dist = min(min_dist, dist)
+                if dist < min_dist:
+                    min_dist = dist
+                    nearest_spawner = spawner
+                    
+            if nearest_spawner:
+                dx = nearest_spawner.x - self.player.x
+                dy = nearest_spawner.y - self.player.y
+                dist = math.sqrt(dx**2 + dy**2)
                 
-            # Small reward inversely proportional to distance
-            # Max reward ~0.02 when very close
-            max_dist = math.sqrt(WINDOW_WIDTH**2 + WINDOW_HEIGHT**2)
-            reward += (1.0 - min_dist / max_dist) * 0.02
+                if dist > 0:
+                    # Direction to spawner (normalized)
+                    dir_x = dx / dist
+                    dir_y = dy / dist
+                    
+                    # Dot product: 1 = facing directly at target, -1 = facing away
+                    facing_alignment = facing_x * dir_x + facing_y * dir_y
+                    
+                    # Reward for facing spawner (max ~0.03 when perfectly aligned)
+                    reward += max(0, facing_alignment) * 0.03
+                    
+                # Distance reward (approach spawner) - max ~0.02
+                reward += (1.0 - min_dist / max_dist) * 0.02
+                
+        # 2. Reward for facing toward nearest enemy when close (combat awareness)
+        if self.enemies:
+            nearest_enemy = None
+            min_enemy_dist = float('inf')
+            for enemy in self.enemies:
+                if enemy.alive:
+                    dx = enemy.x - self.player.x
+                    dy = enemy.y - self.player.y
+                    dist = math.sqrt(dx**2 + dy**2)
+                    if dist < min_enemy_dist:
+                        min_enemy_dist = dist
+                        nearest_enemy = enemy
+                        
+            if nearest_enemy and min_enemy_dist < 200:  # Only when enemy is close
+                dx = nearest_enemy.x - self.player.x
+                dy = nearest_enemy.y - self.player.y
+                dist = math.sqrt(dx**2 + dy**2)
+                
+                if dist > 0:
+                    dir_x = dx / dist
+                    dir_y = dy / dist
+                    facing_alignment = facing_x * dir_x + facing_y * dir_y
+                    
+                    # Small reward for facing nearby enemies (defensive awareness)
+                    reward += max(0, facing_alignment) * 0.01
+                    
+        # 3. Small penalty for being surrounded by many enemies (encourages clearing)
+        nearby_enemies = sum(1 for e in self.enemies if e.alive and 
+                           math.sqrt((e.x - self.player.x)**2 + (e.y - self.player.y)**2) < 150)
+        if nearby_enemies > 3:
+            reward -= 0.01 * (nearby_enemies - 3)
             
         return reward
     

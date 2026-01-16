@@ -123,7 +123,7 @@ PPO_VF_COEF = 0.5
 PPO_MAX_GRAD_NORM = 0.5
 
 # Neural network architecture
-POLICY_NET_ARCH = [128, 128]  # Two hidden layers with 128 neurons each
+POLICY_NET_ARCH = [256, 256]  # Larger network for better learning
 
 # =============================================================================
 # TRAINING HYPERPARAMETERS - DQN (alternative)
@@ -151,13 +151,16 @@ MODEL_DIR = "models"
 # =============================================================================
 # ACTION SPACES
 # =============================================================================
-# Rotation control scheme
+# Rotation control scheme (expanded with combined actions)
 ROTATION_ACTIONS = {
     0: "NO_ACTION",
     1: "THRUST_FORWARD",
     2: "ROTATE_LEFT",
     3: "ROTATE_RIGHT",
-    4: "SHOOT"
+    4: "SHOOT",
+    5: "THRUST_SHOOT",
+    6: "ROTATE_LEFT_SHOOT",
+    7: "ROTATE_RIGHT_SHOOT"
 }
 
 # Directional control scheme

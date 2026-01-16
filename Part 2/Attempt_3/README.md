@@ -2,7 +2,7 @@
 
 A real-time Pygame arena game environment with deep reinforcement learning agents trained using Stable Baselines3. This project implements a complete RL pipeline including custom Gym environments, training scripts, and evaluation tools.
 
-## 🎮 Game Overview
+## Game Overview
 
 The arena is a simplified action game where:
 - **Player Ship**: A controllable ship with health, movement, and shooting capabilities
@@ -14,7 +14,7 @@ The arena is a simplified action game where:
 ### Objective
 Survive as long as possible while destroying enemy spawners to progress through phases. The game features continuous movement, collision detection, and a phase-based difficulty system.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Attempt_3/
@@ -31,7 +31,7 @@ Attempt_3/
 └── README.md                    # This file
 ```
 
-## 🎯 Control Schemes
+## Control Schemes
 
 ### Control Style 1: Rotation Movement
 | Action | Effect |
@@ -41,8 +41,11 @@ Attempt_3/
 | 2 | Rotate left |
 | 3 | Rotate right |
 | 4 | Shoot |
+| 5 | Thrust + Shoot (combined) |
+| 6 | Rotate left + Shoot (combined) |
+| 7 | Rotate right + Shoot (combined) |
 
-The ship has momentum and friction, requiring the player to plan ahead. This scheme is more challenging but offers greater control precision.
+The ship has momentum and friction, requiring the player to plan ahead. Combined actions allow shooting while moving, making the control scheme more viable for combat.
 
 ### Control Style 2: Directional Movement
 | Action | Effect |
@@ -56,7 +59,7 @@ The ship has momentum and friction, requiring the player to plan ahead. This sch
 
 Direct 4-way movement with auto-aiming when shooting. Easier to learn but less precise control.
 
-## 📊 Observation Space
+## Observation Space
 
 ### Rotation Controls (28 features)
 | Index | Feature | Description |
@@ -78,7 +81,7 @@ Direct 4-way movement with auto-aiming when shooting. Easier to learn but less p
 ### Directional Controls (26 features)
 Same structure but without orientation features (indices 4-5), as direction is determined by movement.
 
-## 🏆 Reward Structure
+## Reward Structure
 
 | Event | Reward | Justification |
 |-------|--------|---------------|
@@ -92,10 +95,22 @@ Same structure but without orientation features (indices 4-5), as direction is d
 | Projectile hit | +2.0 | Rewards accurate shooting |
 
 ### Shaping Rewards (Justified)
-- **Approach spawner bonus**: Up to +0.02/step when close to spawners
-  - *Justification*: Guides early exploration toward main objectives without overshadowing task rewards
 
-## 🚀 Installation
+**Rotation Controls** (enhanced shaping for harder control scheme):
+- **Facing spawner bonus**: Up to +0.03/step when facing toward nearest spawner
+  - *Justification*: Rotation requires learning to aim; this guides aiming behavior
+- **Approach spawner bonus**: Up to +0.02/step when close to spawners
+  - *Justification*: Guides exploration toward main objectives
+- **Facing enemy bonus**: Up to +0.01/step when facing nearby enemies (<200 distance)
+  - *Justification*: Encourages defensive awareness and combat readiness
+- **Surrounded penalty**: -0.01/step per enemy beyond 3 within 150 distance
+  - *Justification*: Discourages getting surrounded, encourages clearing enemies
+
+**Directional Controls** (simpler shaping):
+- **Approach spawner bonus**: Up to +0.02/step when close to spawners
+  - *Justification*: Guides early exploration toward main objectives
+
+## Installation
 
 ### Requirements
 ```bash
@@ -108,7 +123,7 @@ python arena_env_rotation.py  # Test rotation environment
 python arena_env_directional.py  # Test directional environment
 ```
 
-## 🎓 Training
+## Training
 
 ### Train Rotation Agent (PPO)
 ```bash
@@ -144,7 +159,7 @@ tensorboard --logdir=logs
 ```
 Open http://localhost:6006 in your browser.
 
-## 📈 Evaluation
+## Evaluation
 
 ### Evaluate Trained Agent
 ```bash
@@ -175,7 +190,7 @@ python evaluate_directional.py --human
 | --human | - | False | Human play mode |
 | --list | - | False | List available models |
 
-## 🧠 Neural Network Architecture
+## Neural Network Architecture
 
 Both agents use the same MLP architecture:
 - **Policy Network**: 128 → 128 neurons (2 hidden layers)
@@ -195,7 +210,7 @@ Both agents use the same MLP architecture:
 | Clip Range | 0.2 | PPO clip range |
 | Entropy Coef | 0.01 | Exploration bonus |
 
-## 🎨 Visualization
+## Visualization
 
 ### Game Elements
 - **Player Ship**: Cyan triangle pointing in movement direction
@@ -213,14 +228,14 @@ Both agents use the same MLP architecture:
 - Reward tracker
 - Step counter
 
-## 📋 Episode Termination
+## Episode Termination
 
 An episode ends when:
 1. **Player Death**: Health reaches 0
 2. **Max Steps**: 3000 steps (configurable)
 3. **Victory**: All spawners destroyed in final phase (Phase 5)
 
-## 🔧 Configuration
+## Configuration
 
 All game parameters can be adjusted in `config.py`:
 
@@ -245,7 +260,7 @@ SPAWNERS_PER_PHASE = 1
 MAX_PHASE = 5
 ```
 
-## 📊 Expected Performance
+## Expected Performance
 
 After ~500k timesteps of training:
 - **Phase Reached**: Consistently reach Phase 2-3
@@ -258,7 +273,7 @@ Performance varies based on:
 - Enemy behavior randomness
 - Action exploration during training
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -271,13 +286,13 @@ Performance varies based on:
 - Use TensorBoard to monitor learning progress
 - Adjust rewards if agent gets stuck in local optima
 
-## 📚 References
+## References
 
 - [Stable Baselines3 Documentation](https://stable-baselines3.readthedocs.io/)
 - [Gymnasium (OpenAI Gym) Documentation](https://gymnasium.farama.org/)
 - [Pygame Documentation](https://www.pygame.org/docs/)
 - [PPO Paper](https://arxiv.org/abs/1707.06347)
 
-## 📝 License
+## License
 
 This project is for educational purposes as part of a Game AI course assignment.

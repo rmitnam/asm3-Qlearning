@@ -42,8 +42,10 @@ class Player:
         
     def update_rotation(self, action: int) -> 'Projectile':
         """
-        Update player with rotation-based controls.
-        Actions: 0=None, 1=Thrust, 2=RotateLeft, 3=RotateRight, 4=Shoot
+        Update player with rotation-based controls (expanded action space).
+        Actions: 
+            0=None, 1=Thrust, 2=RotateLeft, 3=RotateRight, 4=Shoot,
+            5=Thrust+Shoot, 6=RotateLeft+Shoot, 7=RotateRight+Shoot
         Returns a projectile if shooting, else None.
         """
         projectile = None
@@ -53,20 +55,28 @@ class Player:
             self.shoot_cooldown -= 1
         if self.invincibility > 0:
             self.invincibility -= 1
+        
+        # Decode combined actions
+        do_thrust = action in [1, 5]
+        do_rotate_left = action in [2, 6]
+        do_rotate_right = action in [3, 7]
+        do_shoot = action in [4, 5, 6, 7]
             
-        # Process action
-        if action == 1:  # Thrust forward
+        # Process movement
+        if do_thrust:
             rad = math.radians(self.angle)
             self.vx += math.cos(rad) * PLAYER_ACCELERATION
             self.vy += math.sin(rad) * PLAYER_ACCELERATION
-        elif action == 2:  # Rotate left
+            
+        if do_rotate_left:
             self.angle -= PLAYER_ROTATION_SPEED
-        elif action == 3:  # Rotate right
+        elif do_rotate_right:
             self.angle += PLAYER_ROTATION_SPEED
-        elif action == 4:  # Shoot
-            if self.shoot_cooldown <= 0:
-                projectile = self._create_projectile()
-                self.shoot_cooldown = PLAYER_SHOOT_COOLDOWN
+            
+        # Process shooting
+        if do_shoot and self.shoot_cooldown <= 0:
+            projectile = self._create_projectile()
+            self.shoot_cooldown = PLAYER_SHOOT_COOLDOWN
                 
         # Apply friction
         self.vx *= PLAYER_FRICTION

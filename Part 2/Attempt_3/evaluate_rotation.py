@@ -91,6 +91,7 @@ def evaluate_agent(
         print("  A or LEFT: Rotate left")
         print("  D or RIGHT: Rotate right")
         print("  SPACE: Shoot")
+        print("  Combined: Hold SPACE + movement for simultaneous actions")
         
     print(f"\nRunning {n_episodes} episodes...")
     print(f"Deterministic: {deterministic}")
@@ -168,21 +169,35 @@ def evaluate_agent(
 def get_human_action_rotation() -> int:
     """
     Get action from keyboard input for rotation controls.
+    Supports combined actions (movement + shooting).
     
     Returns:
-        Action index (0-4)
+        Action index (0-7)
     """
     keys = pygame.key.get_pressed()
     
-    # Priority: Shoot > Thrust > Rotate
-    if keys[pygame.K_SPACE]:
-        return 4  # Shoot
-    elif keys[pygame.K_w] or keys[pygame.K_UP]:
-        return 1  # Thrust
-    elif keys[pygame.K_a] or keys[pygame.K_LEFT]:
-        return 2  # Rotate left
-    elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-        return 3  # Rotate right
+    shooting = keys[pygame.K_SPACE]
+    thrusting = keys[pygame.K_w] or keys[pygame.K_UP]
+    rotate_left = keys[pygame.K_a] or keys[pygame.K_LEFT]
+    rotate_right = keys[pygame.K_d] or keys[pygame.K_RIGHT]
+    
+    # Combined actions
+    if shooting:
+        if thrusting:
+            return 5  # Thrust + Shoot
+        elif rotate_left:
+            return 6  # Rotate left + Shoot
+        elif rotate_right:
+            return 7  # Rotate right + Shoot
+        else:
+            return 4  # Shoot only
+    else:
+        if thrusting:
+            return 1  # Thrust
+        elif rotate_left:
+            return 2  # Rotate left
+        elif rotate_right:
+            return 3  # Rotate right
     
     return 0  # No action
 

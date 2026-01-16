@@ -63,9 +63,9 @@ def train_ppo(
     os.makedirs(MODEL_DIR, exist_ok=True)
     os.makedirs(LOG_DIR, exist_ok=True)
     
-    # Generate experiment name if not provided
+    # Use simple default name for easy evaluation
     if experiment_name is None:
-        experiment_name = f"rotation_ppo_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        experiment_name = "rotation_ppo"
     
     log_path = os.path.join(LOG_DIR, experiment_name)
     model_path = os.path.join(MODEL_DIR, experiment_name)
@@ -196,9 +196,9 @@ def train_dqn(
     os.makedirs(MODEL_DIR, exist_ok=True)
     os.makedirs(LOG_DIR, exist_ok=True)
     
-    # Generate experiment name if not provided
+    # Use simple default name for easy evaluation
     if experiment_name is None:
-        experiment_name = f"rotation_dqn_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        experiment_name = "rotation_dqn"
     
     log_path = os.path.join(LOG_DIR, experiment_name)
     model_path = os.path.join(MODEL_DIR, experiment_name)
