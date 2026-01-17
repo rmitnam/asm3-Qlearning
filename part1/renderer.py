@@ -249,12 +249,27 @@ class GridWorldRenderer:
         # Episode status
         status_y = panel_y + 50
         if self.env.done:
-            if self.env.total_reward < 0:
-                status = "FAILED - Agent Died"
+            info = getattr(self.env, 'last_info', {})
+            if 'death' in info:
+                if info['death'] == 'fire':
+                    status = "FAILED - Burned by Fire!"
+                else:
+                    status = "FAILED - Killed by Monster!"
                 color = (255, 0, 0)
-            else:
+            elif info.get('result') == 'timeout':
+                status = "TIMEOUT - Step Limit Reached"
+                color = (255, 165, 0)  # Orange
+            elif info.get('result') == 'success':
                 status = "SUCCESS - All Rewards Collected!"
                 color = (0, 150, 0)
+            else:
+                # Fallback based on reward
+                if self.env.total_reward < 0:
+                    status = "FAILED - Agent Died"
+                    color = (255, 0, 0)
+                else:
+                    status = "SUCCESS - Episode Complete"
+                    color = (0, 150, 0)
             status_text = self.font.render(status, True, color)
             self.screen.blit(status_text, (10, status_y))
         

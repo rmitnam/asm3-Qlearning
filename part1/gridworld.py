@@ -109,32 +109,78 @@ class GridWorld:
         self.total_reward = 0
         self.done = False
         self.state_visit_counts = {}
-        
+        self.last_info = {}  # Store last step info for renderer
+
         return self.get_state()
     
     def get_state(self):
         """
         Get current state representation.
-        
+
         Returns:
             State tuple - format depends on level:
-            - Levels 0-1: (x, y)
-            - Levels 2-3: (x, y, has_key)
-            - Levels 4-5: (x, y, has_key, monster_tuple)
+            - Levels 0-1: (x, y, collected_apples_tuple)
+            - Levels 2-3, 6: (x, y, has_key, chest_opened, collected_apples_tuple)
+            - Levels 4-5: (x, y, has_key, chest_opened, collected_apples_tuple, nearest_monster_direction)
+
+        Note: Monster positions are NOT included directly since that causes state explosion.
+        Instead, we use the direction to the nearest monster as a simplified representation.
         """
-        # For levels with monsters, include monster positions
+        x, y = self.agent_pos
+
+        # Convert collected apples to a sorted tuple for consistent hashing
+        collected_tuple = tuple(sorted(self.collected_apples))
+
+        # For levels with monsters, include nearest monster direction instead of positions
         if len(self.monsters) > 0:
-            # Sort monsters for consistent state representation
-            monster_tuple = tuple(sorted(self.monsters))
-            return (self.agent_pos[0], self.agent_pos[1], self.has_key, monster_tuple)
-        
-        # For levels with key/chest, include has_key flag
+            # Calculate direction to nearest monster (simplified state)
+            nearest_dir = self._get_nearest_monster_direction()
+            return (x, y, self.has_key, self.chest_opened, collected_tuple, nearest_dir)
+
+        # For levels with key/chest, include has_key and chest_opened
         elif self.key_position is not None or self.chest_position is not None:
-            return (self.agent_pos[0], self.agent_pos[1], self.has_key)
-        
-        # Simple levels: just position
+            return (x, y, self.has_key, self.chest_opened, collected_tuple)
+
+        # Simple levels: position + collected apples
         else:
-            return (self.agent_pos[0], self.agent_pos[1])
+            return (x, y, collected_tuple)
+
+    def _get_nearest_monster_direction(self):
+        """
+        Get a simplified representation of monster threat direction.
+        Returns a tuple indicating which quadrant the nearest monster is in.
+        This keeps state space manageable while giving some monster awareness.
+        """
+        if not self.monsters:
+            return (0, 0)
+
+        ax, ay = self.agent_pos
+        min_dist = float('inf')
+        nearest = None
+
+        for mx, my in self.monsters:
+            dist = abs(mx - ax) + abs(my - ay)  # Manhattan distance
+            if dist < min_dist:
+                min_dist = dist
+                nearest = (mx, my)
+
+        if nearest is None:
+            return (0, 0)
+
+        mx, my = nearest
+        # Return relative direction: (-1, 0, 1) for each axis
+        dx = 0 if mx == ax else (1 if mx > ax else -1)
+        dy = 0 if my == ay else (1 if my > ay else -1)
+
+        # Also encode distance category: close (<=2), medium (3-5), far (>5)
+        if min_dist <= 2:
+            dist_cat = 0  # danger close
+        elif min_dist <= 5:
+            dist_cat = 1  # medium
+        else:
+            dist_cat = 2  # far
+
+        return (dx, dy, dist_cat)
     
     def is_valid_position(self, pos):
         """
@@ -191,12 +237,14 @@ class GridWorld:
         if entity_at_pos == config.FIRE:
             reward = config.REWARD_DEATH
             self.done = True
-            return self.get_state(), reward, self.done, {'death': 'fire'}
-        
+            self.last_info = {'death': 'fire'}
+            return self.get_state(), reward, self.done, self.last_info
+
         if self.agent_pos in self.monsters:
             reward = config.REWARD_DEATH
             self.done = True
-            return self.get_state(), reward, self.done, {'death': 'monster'}
+            self.last_info = {'death': 'monster'}
+            return self.get_state(), reward, self.done, self.last_info
         
         # Check for collectibles
         if entity_at_pos == config.APPLE and self.agent_pos not in self.collected_apples:
@@ -225,19 +273,27 @@ class GridWorld:
             if self.agent_pos in self.monsters:
                 reward = config.REWARD_DEATH
                 self.done = True
-                return self.get_state(), reward, self.done, {'death': 'monster'}
-        
+                self.last_info = {'death': 'monster'}
+                return self.get_state(), reward, self.done, self.last_info
+
         # Check if episode is complete (all rewards collected)
         if self._all_rewards_collected():
             self.done = True
-        
+            self.total_reward += reward
+            self.last_info = {'result': 'success'}
+            return self.get_state(), reward, self.done, self.last_info
+
         # Check for timeout
         if self.steps >= config.MAX_STEPS_PER_EPISODE:
             self.done = True
-        
+            self.total_reward += reward
+            self.last_info = {'result': 'timeout'}
+            return self.get_state(), reward, self.done, self.last_info
+
         self.total_reward += reward
-        
-        return self.get_state(), reward, self.done, {}
+        self.last_info = {}
+
+        return self.get_state(), reward, self.done, self.last_info
     
     def get_intrinsic_reward(self, state):
         """

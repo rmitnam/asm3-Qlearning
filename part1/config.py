@@ -25,7 +25,7 @@ RENDER_EVALUATION = True        # Always render during final evaluation
 
 # Intrinsic reward settings
 USE_INTRINSIC_REWARD = False    # Enable intrinsic rewards (for Level 6)
-INTRINSIC_REWARD_BETA = 1.0     # Scaling factor for intrinsic rewards
+INTRINSIC_REWARD_BETA = 0.1     # Scaling factor for intrinsic rewards (small to not overwhelm env rewards)
 
 # Monster settings
 MONSTER_MOVE_PROBABILITY = 0.4  # Probability monster moves after agent action
@@ -220,7 +220,7 @@ LEVELS = {
     # ========================================================================
     # LEVEL 5: Monsters with Key-Chest
     # Goal: Complete objectives while avoiding stochastic monsters
-    # Combines all mechanics: key, chest, apples, monsters
+    # Combines key, chest, apples, and monsters (simplified for learning)
     # ========================================================================
     5: {
         'name': 'Level 5: Monsters + Key & Chest',
@@ -228,13 +228,13 @@ LEVELS = {
         'grid': [
             "############",
             "#A.........#",
-            "#.M##....M.#",
-            "#..##......#",
             "#..........#",
+            "#..........#",
+            "#.....M....#",
             "#..K.......#",
             "#..........#",
-            "#..##......#",
-            "#..##....M.#",
+            "#..........#",
+            "#.......M..#",
             "#.........C#",
             "#.........A#",
             "############",
@@ -244,27 +244,28 @@ LEVELS = {
 
     # ========================================================================
     # LEVEL 6: Intrinsic Reward Test
-    # Goal: Test exploration bonus with intrinsic rewards
-    # Larger space to demonstrate exploration benefit
+    # Goal: Demonstrate exploration bonus with intrinsic rewards
+    # Single distant reward at the end of a winding path
+    # Intrinsic rewards encourage systematic exploration of the maze
     # ========================================================================
     6: {
         'name': 'Level 6: Exploration Challenge',
-        'description': 'Large open space. Test intrinsic rewards for exploration.',
+        'description': 'Find the hidden reward. Intrinsic rewards aid exploration.',
         'grid': [
             "############",
             "#..........#",
-            "#..........#",
-            "#...####...#",
-            "#...#..#...#",
-            "#...#K.#...#",
-            "#...#..#...#",
-            "#...####...#",
-            "#..........#",
-            "#A.......CA#",
-            "#..........#",
+            "#.######.#.#",
+            "#.#....#.#.#",
+            "#.#.##.#.#.#",
+            "#.#.##.#.#.#",
+            "#.#....#.#.#",
+            "#.######.#.#",
+            "#........#.#",
+            "#.########.#",
+            "#.........A#",
             "############",
         ],
-        'start_pos': (6, 6),  # Start in middle to test exploration
+        'start_pos': (1, 1),  # Start at top-left, reward at bottom-right corner
     },
 }
 
