@@ -135,24 +135,24 @@ python arena_env_directional.py  # Test directional environment
 
 ## Training
 
-### Train Rotation Agent (PPO)
-
-```bash
-# Default training (500k timesteps)
-python train_rotation.py
-
-# Custom training
-python train_rotation.py --timesteps 300000 --n-envs 8 --name my_experiment
-```
-
 ### Train Directional Agent (PPO)
 
 ```bash
-# Default training
+# Default training (1M timesteps, 8 parallel envs)
 python train_directional.py
 
 # Custom training with different learning rate
-python train_directional.py -t 400000 -lr 0.0001
+python train_directional.py -t 500000 -lr 0.0003
+```
+
+### Train Rotation Agent (PPO)
+
+```bash
+# Default training (1M timesteps, 8 parallel envs)
+python train_rotation.py
+
+# Custom training
+python train_rotation.py --timesteps 500000 --n-envs 4 --name my_experiment
 ```
 
 ### Training Arguments
@@ -160,9 +160,9 @@ python train_directional.py -t 400000 -lr 0.0001
 | Argument | Short | Default | Description |
 | -------- | ----- | ------- | ----------- |
 | --algorithm | -a | ppo | RL algorithm (ppo/dqn) |
-| --timesteps | -t | 500000 | Total training timesteps |
-| --n-envs | -n | 4 | Parallel environments (PPO) |
-| --learning-rate | -lr | 3e-4 | Learning rate |
+| --timesteps | -t | 1000000 | Total training timesteps |
+| --n-envs | -n | 8 | Parallel environments (PPO) |
+| --learning-rate | -lr | 2.5e-4 | Learning rate |
 | --seed | -s | 42 | Random seed |
 | --name | -N | auto | Experiment name |
 
@@ -179,11 +179,11 @@ Open <http://localhost:6006> in your browser.
 ### Evaluate Trained Agent
 
 ```bash
-# Rotation agent
-python evaluate_rotation.py --model models/rotation_ppo
-
 # Directional agent  
 python evaluate_directional.py --model models/directional_ppo
+
+# Rotation agent
+python evaluate_rotation.py --model models/rotation_ppo
 ```
 
 ### Human Play Mode
@@ -212,23 +212,25 @@ python evaluate_directional.py --human
 
 Both agents use the same MLP architecture:
 
-- **Policy Network**: 128 → 128 neurons (2 hidden layers)
-- **Value Network**: 128 → 128 neurons (2 hidden layers)
+- **Policy Network**: 512 → 256 → 128 neurons (3 hidden layers)
+- **Value Network**: 512 → 256 → 128 neurons (3 hidden layers)
 - **Activation**: ReLU
 - **Output**: Softmax over discrete actions
 
-### PPO Hyperparameters
+### PPO Hyperparameters (Optimized for Arena Survival)
 
 | Parameter | Value | Description |
 | --------- | ----- | ----------- |
-| Learning Rate | 3e-4 | Optimizer learning rate |
-| N Steps | 2048 | Steps per update |
-| Batch Size | 64 | Mini-batch size |
-| Epochs | 10 | Passes over data |
-| Gamma | 0.99 | Discount factor |
-| GAE Lambda | 0.95 | GAE parameter |
-| Clip Range | 0.2 | PPO clip range |
-| Entropy Coef | 0.01 | Exploration bonus |
+| Learning Rate | 2.5e-4 | Slightly lower for stability in combat scenarios |
+| N Steps | 4096 | Longer rollouts to capture complete combat sequences |
+| Batch Size | 256 | Larger batches for stable gradient estimates |
+| Epochs | 15 | More learning per rollout |
+| Gamma | 0.995 | Higher discount for long-term survival planning |
+| GAE Lambda | 0.98 | Less bias in advantage estimation |
+| Clip Range | 0.15 | Tighter clipping for conservative updates |
+| Clip Range VF | 0.2 | Prevents value function overestimation |
+| Entropy Coef | 0.02 | Higher exploration for combat variety |
+| N Envs | 8 | More parallel environments for sample diversity |
 
 ## Visualization
 
@@ -288,18 +290,26 @@ MAX_PHASE = 5
 
 ## Expected Performance
 
-After ~500k timesteps of training:
+After ~1M timesteps of training with optimized hyperparameters:
 
-- **Phase Reached**: Consistently reach Phase 2-3
-- **Enemies Killed**: 20-50 per episode
-- **Spawners Killed**: 2-5 per episode
-- **Survival Time**: 1000-2000 steps
+- **Phase Reached**: Consistently reach Phase 3-4
+- **Enemies Killed**: 30-70 per episode
+- **Spawners Killed**: 3-6 per episode
+- **Survival Time**: 1500-2500 steps
 
 Performance varies based on:
 
 - Random spawner placement
 - Enemy behavior randomness
 - Action exploration during training
+
+### Hyperparameter Optimization Rationale
+
+- **Higher Gamma (0.995)**: Critical for survival games where long-term planning matters
+- **Deeper Network [512, 256, 128]**: Better spatial reasoning for combat scenarios
+- **Larger Batch Size (256)**: More stable learning with reduced variance
+- **More N_Steps (4096)**: Captures longer trajectories including full combat sequences
+- **Higher Entropy (0.02)**: Encourages exploration of diverse strategies
 
 ## Troubleshooting
 

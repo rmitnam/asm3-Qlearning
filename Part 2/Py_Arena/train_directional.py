@@ -44,7 +44,7 @@ def make_env(rank: int, seed: int = 0):
 
 def train_ppo(
     total_timesteps: int = TOTAL_TIMESTEPS,
-    n_envs: int = 4,
+    n_envs: int = N_ENVS,
     learning_rate: float = PPO_LEARNING_RATE,
     seed: int = 42,
     experiment_name: str = None
@@ -108,6 +108,7 @@ def train_ppo(
         gamma=PPO_GAMMA,
         gae_lambda=PPO_GAE_LAMBDA,
         clip_range=PPO_CLIP_RANGE,
+        clip_range_vf=PPO_CLIP_RANGE_VF,
         ent_coef=PPO_ENT_COEF,
         vf_coef=PPO_VF_COEF,
         max_grad_norm=PPO_MAX_GRAD_NORM,
@@ -316,8 +317,8 @@ def main():
     parser.add_argument(
         "--n-envs", "-n",
         type=int,
-        default=4,
-        help="Number of parallel environments for PPO (default: 4)"
+        default=N_ENVS,
+        help=f"Number of parallel environments for PPO (default: {N_ENVS})"
     )
     parser.add_argument(
         "--learning-rate", "-lr",
