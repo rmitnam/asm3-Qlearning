@@ -109,21 +109,31 @@ OBSERVATION_SIZE_ROTATION = 28
 OBSERVATION_SIZE_DIRECTIONAL = 26  # no orientation needed
 
 # =============================================================================
-# TRAINING HYPERPARAMETERS - PPO
+# TRAINING HYPERPARAMETERS - PPO (Optimized for Arena Survival)
 # =============================================================================
-PPO_LEARNING_RATE = 3e-4
-PPO_N_STEPS = 2048
-PPO_BATCH_SIZE = 64
-PPO_N_EPOCHS = 10
-PPO_GAMMA = 0.99
-PPO_GAE_LAMBDA = 0.95
-PPO_CLIP_RANGE = 0.2
-PPO_ENT_COEF = 0.01
-PPO_VF_COEF = 0.5
-PPO_MAX_GRAD_NORM = 0.5
+# Learning rate: Start higher for faster initial learning, use schedule for stability
+PPO_LEARNING_RATE = 2.5e-4  # Slightly lower for stability in combat scenarios
 
-# Neural network architecture
-POLICY_NET_ARCH = [256, 256]  # Larger network for better learning
+# Rollout settings: More steps for better advantage estimation in long episodes
+PPO_N_STEPS = 4096  # Increased for better trajectory sampling (captures more combat sequences)
+PPO_BATCH_SIZE = 256  # Larger batches for more stable gradient estimates
+PPO_N_EPOCHS = 15  # More epochs to extract more learning from each rollout
+
+# Discount factors: Tuned for survival game dynamics
+PPO_GAMMA = 0.995  # Higher discount for long-term survival planning
+PPO_GAE_LAMBDA = 0.98  # Higher lambda for less bias in advantage estimation
+
+# PPO clipping: Conservative clipping for stable learning
+PPO_CLIP_RANGE = 0.15  # Slightly tighter clipping for more stable updates
+PPO_CLIP_RANGE_VF = 0.2  # Clip value function updates (reduces value function overestimation)
+
+# Entropy and value coefficients: Encourage exploration early
+PPO_ENT_COEF = 0.02  # Higher entropy for more exploration (important for combat variety)
+PPO_VF_COEF = 0.5  # Standard value function coefficient
+PPO_MAX_GRAD_NORM = 0.5  # Gradient clipping for stability
+
+# Neural network architecture: Deeper network for complex spatial reasoning
+POLICY_NET_ARCH = [512, 256, 128]  # 3-layer network for better feature extraction
 
 # =============================================================================
 # TRAINING HYPERPARAMETERS - DQN (alternative)
@@ -142,11 +152,12 @@ DQN_EXPLORATION_FINAL_EPS = 0.05
 # =============================================================================
 # TRAINING SETTINGS
 # =============================================================================
-TOTAL_TIMESTEPS = 500000
-EVAL_FREQ = 10000
-N_EVAL_EPISODES = 5
+TOTAL_TIMESTEPS = 1000000  # Increased for better convergence
+EVAL_FREQ = 20000  # Evaluate less frequently for faster training
+N_EVAL_EPISODES = 10  # More episodes for reliable evaluation
 LOG_DIR = "logs"
 MODEL_DIR = "models"
+N_ENVS = 8  # More parallel environments for better sample diversity
 
 # =============================================================================
 # ACTION SPACES
